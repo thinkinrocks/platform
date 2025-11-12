@@ -1,4 +1,6 @@
 mod templates;
+mod models;
+mod datastore;
 
 use askama::Template;
 use axum::{Router, response::Html, routing::get};
@@ -23,7 +25,6 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .init();
-
 
     let app = Router::new()
         .route("/", get(index))

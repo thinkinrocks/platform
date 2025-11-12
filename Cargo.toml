@@ -6,10 +6,13 @@ edition = "2024"
 [dependencies]
 askama = "0.14.0"
 axum = "0.8.6"
+chrono = { version = "0.4.42", features = ["serde"] }
 dotenvy = "0.15.7"
+lazy_static = "1.5.0"
 serde = "1.0.228"
 serde_json = "1.0.145"
-sqlx = { version = "0.8.6", features = ["runtime-tokio"] }
+snowflake = "1.3.0"
+sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite"] }
 tokio = { version = "1.48.0", features = ["macros", "net", "rt-multi-thread", "sync", "tracing"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
