@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{% block title %}Default Title{% endblock %}</title>
+    <script src="/htmx.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>Thinkin Rocks Platform</h1>
+    </header>
+
+    <main>
+      {% block content %}
+      <p>Oh, no content</p>
+      {% endblock %}
+    </main>
+
+    <footer>
+      <p>(c) Thinkin Rocks, all rights reserved </p>
+    </footer>
+  </body>
+</html>
