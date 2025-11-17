@@ -1,6 +1,8 @@
 mod templates;
 mod models;
 mod datastore;
+mod hash;
+mod snowflake;
 
 use askama::Template;
 use axum::{Router, response::Html, routing::get};

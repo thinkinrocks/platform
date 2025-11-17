@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
@@ -6,22 +6,15 @@ use sqlx::FromRow;
 pub struct User {
     pub id: i64,
     pub display_name: String,
-    pub github: Option<String>,
-    pub sire_id: Option<i64>,
-    pub initiated_at: DateTime<Utc>,
+    pub access_code_hash: String,
+    pub sign_up_code_id: Option<i64>,
+    pub initiated_at: NaiveDateTime,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
-pub struct Token {
+pub struct SignUpCode {
     pub id: i64,
-    pub created_at: DateTime<Utc>,
-    pub token: String,
-    pub owner: i64,
-}
-
-#[derive(Debug, Serialize, Deserialize, FromRow)]
-pub struct Commitment {
-    pub performed_at: DateTime<Utc>,
-    pub token_id: i64,
-    pub chlide_id: i64,
+    pub granted_by: i64,
+    pub code: String,
+    pub at: NaiveDateTime,
 }

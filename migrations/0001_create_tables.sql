@@ -1,23 +1,20 @@
-CREATE TABLE user (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     display_name TEXT NOT NULL,
-    github TEXT,
-    sire_id INTEGER,
+    access_code_hash CHAR(64) NOT NULL CHECK (length(access_code_hash) = 64),
+    sign_up_code_id INTEGER NULL,  -- allow NULL for optional foreign key
     initiated_at TEXT NOT NULL
 );
 
-CREATE TABLE token (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    created_at TEXT NOT NULL,
-    token TEXT NOT NULL,
-    owner INTEGER NOT NULL,
-    FOREIGN KEY(owner) REFERENCES user(id)
+CREATE TABLE IF NOT EXISTS sign_up_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    granted_by INTEGER NOT NULL,
+    code TEXT NOT NULL,
+    at TEXT NOT NULL,
+    FOREIGN KEY (granted_by) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE commitment (
-    performed_at TEXT NOT NULL,
-    token_id INTEGER NOT NULL,
-    chlide_id INTEGER NOT NULL,
-    FOREIGN KEY(token_id) REFERENCES token(id),
-    FOREIGN KEY(chlide_id) REFERENCES user(id)
-);
+PRAGMA foreign_keys = ON;
+CREATE INDEX IF NOT EXISTS idx_users_access_code_hash ON users(access_code_hash);
+CREATE INDEX IF NOT EXISTS idx_users_sign_up_code_id ON users(sign_up_code_id);
+CREATE INDEX IF NOT EXISTS idx_sign_up_codes_granted_by ON sign_up_codes(granted_by);
