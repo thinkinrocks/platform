@@ -1,7 +1,7 @@
 mod templates;
 mod models;
 mod datastore;
-mod hash;
+mod misc;
 mod snowflake;
 
 use askama::Template;

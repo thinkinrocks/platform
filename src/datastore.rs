@@ -1,8 +1,10 @@
-use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime, Utc};
-use snowflaked::Snowflake;
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use sqlx::{Pool, Sqlite, sqlite::SqlitePoolOptions};
 
-use crate::{models::User, snowflake::generate_id};
+use crate::{
+    misc::{generate_code, generate_id},
+    models::User,
+};
 
 pub struct Datastore {
     pool: Pool<Sqlite>,
@@ -31,11 +33,10 @@ impl Datastore {
         display_name: impl ToString,
         access_code_hash: impl ToString,
         sign_up_code_id: Option<i64>,
-        initiated_at: DateTime<Utc>,
     ) -> i64 {
         let display_name = display_name.to_string();
         let access_code_hash = access_code_hash.to_string();
-        let initiated_at = initiated_at.to_rfc3339();
+        let initiated_at = Utc::now().naive_utc().to_string();
         let id = generate_id();
 
         let row = sqlx::query!(
@@ -84,11 +85,32 @@ impl Datastore {
 
         Ok(user)
     }
+
+    pub async fn create_sign_up_code(&self, granted_by: i64) -> String {
+        let now = chrono::Utc::now().naive_utc().to_string();
+        let code = generate_code().expect("Failed to instantiate OsRng for generating codes");
+
+        let code_clone = code.clone();
+        let _ = sqlx::query!(
+            r#"
+            INSERT INTO sign_up_codes (granted_by, code, at)
+            VALUES (?, ?, ?)
+            "#,
+            granted_by,
+            code_clone,
+            now
+        )
+        .execute(&self.pool)
+        .await
+        .unwrap();
+
+        code
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::hash::hash_digest;
+    use crate::misc::hash_digest;
 
     use super::*;
 
@@ -100,12 +122,7 @@ mod tests {
         let access_code_hash = hash_digest(b"ABC123");
 
         let id = database
-            .add_user(
-                display_name,
-                access_code_hash.clone(),
-                None,
-                DateTime::<Utc>::from_timestamp_nanos(0),
-            )
+            .add_user(display_name, access_code_hash.clone(), None)
             .await;
 
         let user = database
@@ -113,7 +130,7 @@ mod tests {
             .await
             .unwrap()
             .unwrap();
-        
+
         assert_eq!(user.id, id);
         assert_eq!(user.display_name, display_name);
     }
