@@ -1,12 +1,15 @@
-mod templates;
-mod models;
 mod datastore;
 mod misc;
-mod snowflake;
+mod api;
+mod models;
+mod templates;
 
 use askama::Template;
 use axum::{Router, response::Html, routing::get};
+use tokio::net::TcpListener;
 use tracing::{info, warn};
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 use crate::templates::IndexHTML;
 
@@ -18,10 +21,16 @@ async fn index() -> Html<String> {
     Html(IndexHTML.render().unwrap())
 }
 
+#[derive(OpenApi)]
+struct ApiDocs;
+
 #[tokio::main]
 async fn main() {
     if let Err(err) = dotenvy::dotenv() {
-        warn!("Failed to load the environment file is everything configured correctly? Error: {:?}", err);
+        warn!(
+            "Failed to load the environment file is everything configured correctly? Error: {:?}",
+            err
+        );
     }
 
     tracing_subscriber::fmt()
@@ -30,9 +39,10 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(index))
-        .route("/htmx.js", get(htmx));
+        .route("/htmx.js", get(htmx))
+        .merge(SwaggerUi::new("/docs").url("/openapi.json", ApiDocs::openapi()));
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
 
     info!("Serving at http://0.0.0.0:3000");
 
