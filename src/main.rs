@@ -51,6 +51,10 @@ async fn htmx() -> &'static str {
     include_str!("js/htmx.min.js")
 }
 
+async fn css() -> &'static str {
+    include_str!("style.css")
+}
+
 struct AppState {
     tera: Arc<Tera>,
     repo: Arc<Repository>,
@@ -102,6 +106,7 @@ async fn main() {
         .route("/", get(index))
         .route("/entry/{id}", get(entry))
         .route("/htmx.min.js", get(htmx))
+        .route("/style.css", get(css))
         .with_state(Arc::new(app));
 
     let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
