@@ -12,6 +12,7 @@ use axum::{
     response::Html,
     routing::get,
 };
+use serde::Deserialize;
 use sqlx::sqlite::SqlitePoolOptions;
 use tera::{Context, Tera};
 use tokio::net::TcpListener;
@@ -53,6 +54,11 @@ async fn htmx() -> &'static str {
 
 async fn css() -> &'static str {
     include_str!("style.css")
+}
+
+#[derive(Deserialize)]
+struct Pagination {
+    page: Option<u32>,
 }
 
 struct AppState {

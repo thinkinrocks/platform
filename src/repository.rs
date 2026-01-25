@@ -178,4 +178,56 @@ impl Repository {
 
         Ok(entries)
     }
+
+    pub async fn get_entries_paginated(
+        &self,
+        page_size: u32,
+        page_number: u32,
+    ) -> Result<Vec<Entry>, RepositoryError> {
+        let offset = (page_number.saturating_sub(1) * page_size) as i64;
+
+        let rows = sqlx::query(
+            r#"
+            SELECT
+                id,
+                name,
+                image,
+                description,
+                note,
+                created_at,
+                stored_in,
+                responsible_person
+            FROM entries
+            ORDER BY created_at DESC
+            LIMIT ? OFFSET ?
+            "#,
+        )
+        .bind(page_size as i64)
+        .bind(offset)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let entries: Vec<Entry> = rows
+            .into_iter()
+            .map(|row| {
+                let created_at_str: Option<String> = row.try_get("created_at").ok();
+                let created_at = created_at_str
+                    .as_deref()
+                    .and_then(|s| NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").ok());
+
+                Entry {
+                    id: row.get("id"),
+                    name: row.get("name"),
+                    image: row.get("image"),
+                    description: row.get("description"),
+                    note: row.get("note"),
+                    created_at,
+                    stored_in: row.get("stored_in"),
+                    responsible_person: row.get("responsible_person"),
+                }
+            })
+            .collect();
+
+        Ok(entries)
+    }
 }
