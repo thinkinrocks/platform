@@ -40,7 +40,7 @@ impl Repository {
     }
 
     pub async fn add_entry(&self, entry: Entry) -> Result<(), sqlx::Error> {
-        sqlx::query(
+        sqlx::query!(
             r#"
         INSERT INTO entries (
             id,
@@ -53,15 +53,15 @@ impl Repository {
             responsible_person
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         "#,
+            entry.id,
+            entry.name,
+            entry.image,
+            entry.description,
+            entry.note,
+            entry.created_at,
+            entry.stored_in,
+            entry.responsible_person
         )
-        .bind(&entry.id)
-        .bind(&entry.name)
-        .bind(&entry.image)
-        .bind(&entry.description)
-        .bind(&entry.note)
-        .bind(&entry.created_at)
-        .bind(&entry.stored_in)
-        .bind(&entry.responsible_person)
         .execute(&self.pool)
         .await
         .map(drop)
@@ -88,6 +88,49 @@ impl Repository {
                 salt: row.salt,
                 password_hash: row.password_hash,
                 sire: row.sire,
+            }))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn get_entry(&self, id: impl AsRef<str>) -> Result<Option<Entry>, RepositoryError> {
+        let id = id.as_ref();
+
+        let row = sqlx::query!(
+            r#"
+        SELECT
+            id,
+            name,
+            image,
+            description,
+            note,
+            created_at,
+            stored_in,
+            responsible_person
+        FROM entries
+        WHERE id = ?
+        "#,
+            id
+        )
+        .fetch_optional(&self.pool)
+        .await?;
+
+        if let Some(row) = row {
+            let created_at = row
+                .created_at
+                .as_deref()
+                .and_then(|s| NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").ok());
+
+            Ok(Some(Entry {
+                id: row.id.unwrap(),
+                name: row.name,
+                image: row.image,
+                description: row.description,
+                note: row.note,
+                created_at,
+                stored_in: row.stored_in,
+                responsible_person: row.responsible_person,
             }))
         } else {
             Ok(None)
