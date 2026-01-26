@@ -12,6 +12,4 @@ We index our stuff using IDs, for example `<code>USBFLASH-001-AZ7</code>`. The f
 - <code>/help</code> or <code>/start</code> shows this list
 - <code>/tts [message]</code> sends a text-to-speech message to our HQ
 
-<i>Thank you for taking interest in our stuff! If something seems broken reach out to @ktnlvr.</i>
-
-- @tr_mgmt_bot
+<i>Thank you for taking interest in our stuff! If something seems broken reach out to @ktnlvr or <a href="https://github.com/thinkinrocks/platform">look at the code yourself</a>.</i>
