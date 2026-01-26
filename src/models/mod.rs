@@ -4,10 +4,7 @@ use sqlx::FromRow;
 
 #[derive(Debug, Clone, FromRow, Deserialize)]
 pub struct User {
-    pub login: String,
-    pub username: String,
-    pub salt: String,
-    pub password_hash: String,
+    pub telegram_username: String,
     pub sire: Option<String>,
 }
 

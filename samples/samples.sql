@@ -1,18 +1,6 @@
 INSERT INTO
-    users (
-        login,
-        username,
-        salt,
-        password_hash,
-        sire
-    )
-VALUES (
-        'alex',
-        'Alex',
-        'BriUIvYDXESWprriWyVsvMsaEqY3aDhK',
-        'IZdudvRoOmgxtA3eEAKznjO06p3XIj9iOtRvEp1Kv6ZNiKcuKJH9Gvktp/uCQnPNn78Ui8KtZZVt4j6Qo2ferA==', -- qwerty123
-        NULL
-    );
+    users (telegram_username, sire)
+VALUES ('ktnlvr', NULL);
 
 INSERT INTO
     entries (
@@ -33,7 +21,7 @@ VALUES (
         NULL,
         datetime('now'),
         NULL,
-        'alex'
+        'ktnlvr'
     );
 
 INSERT INTO
@@ -62,7 +50,7 @@ VALUES (
         NULL,
         datetime('now'),
         NULL,
-        'alex'
+        'ktnlvr'
     );
 
 INSERT INTO
@@ -84,5 +72,5 @@ VALUES (
         NULL,
         datetime('now'),
         NULL,
-        'alex'
+        'ktnlvr'
     );

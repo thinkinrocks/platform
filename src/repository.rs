@@ -24,14 +24,11 @@ impl Repository {
     pub async fn add_user(&self, user: User) -> Result<(), RepositoryError> {
         sqlx::query!(
             r#"
-        INSERT INTO users (login, username, salt, password_hash, sire)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO users (telegram_username, sire)
+        VALUES (?, ?)
         "#,
-            user.login,
-            user.username,
-            user.salt,
-            user.password_hash,
-            user.sire
+            user.telegram_username,
+            user.sire,
         )
         .execute(&self.pool)
         .await?;
@@ -67,26 +64,26 @@ impl Repository {
         .map(drop)
     }
 
-    pub async fn get_user(&self, login: impl AsRef<str>) -> Result<Option<User>, RepositoryError> {
-        let login = login.as_ref();
+    pub async fn get_user(
+        &self,
+        telegram_username: impl AsRef<str>,
+    ) -> Result<Option<User>, RepositoryError> {
+        let telegram_username = telegram_username.as_ref();
 
         let row = sqlx::query!(
             r#"
-        SELECT login, username, salt, password_hash, sire
+        SELECT telegram_username, sire
         FROM users
-        WHERE login = ?
+        WHERE telegram_username = ?
         "#,
-            login
+            telegram_username
         )
         .fetch_optional(&self.pool)
         .await?;
 
         if let Some(row) = row {
             Ok(Some(User {
-                login: row.login,
-                username: row.username,
-                salt: row.salt,
-                password_hash: row.password_hash,
+                telegram_username: row.telegram_username,
                 sire: row.sire,
             }))
         } else {
