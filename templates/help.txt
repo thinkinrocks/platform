@@ -1,0 +1,17 @@
+Hello! I am the <b>Thinkin' Rocks*</b> management bot!
+
+I am designed to help you interact with our infra.
+
+We index our stuff using IDs, for example `<code>USBFLASH-001-AZ7</code>`. The first part is the human-readable name of the item. The second is a serial incrementing number. The tail is just 3 random alphanumeric characters. The bot only understands those IDs.
+
+- <code>/me</code> checks your identity as you are in our system
+- <code>/search [query]</code> searches our database
+- <code>/cart [id1] [id2] ... [id2]</code> adds items to your cart
+- <code>/cart</code> shows the list of items you currently have selected
+- <code>/check [id]</code> displays detailde item information
+- <code>/help</code> or <code>/start</code> shows this list
+- <code>/tts [message]</code> sends a text-to-speech message to our HQ
+
+<i>Thank you for taking interest in our stuff! If something seems broken reach out to @ktnlvr.</i>
+
+- @tr_mgmt_bot

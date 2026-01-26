@@ -11,7 +11,7 @@ use teloxide::{macros::BotCommands, prelude::*, types::ParseMode};
 
 use crate::{
     repository::Repository,
-    templates::{Cart, Me, Search, SingleEntry},
+    templates::{Cart, Help, Me, Search, SingleEntry},
 };
 
 #[derive(BotCommands, Clone)]
@@ -24,6 +24,7 @@ pub enum Command {
     Search(String),
     Cart(String),
     Check(String),
+    Tts(String),
 }
 
 async fn handler(
@@ -33,12 +34,14 @@ async fn handler(
     repo: Arc<Repository>,
 ) -> ResponseResult<()> {
     match cmd {
-        Command::Introduce(_) => {
+        Command::Introduce(_) | Command::Tts(_) => {
             bot.send_message(msg.chat.id, "Sorry! This command doesn't work yet. If you need it to work message @ktnlvr, he made the bot.").await?;
         }
         Command::Start | Command::Help => {
-            bot.send_message(msg.chat.id, "Hello, this is the Thinkin' Rocks* bot")
-                .await?;
+            bot.send_message(msg.chat.id, Help.render().unwrap())
+                .parse_mode(ParseMode::Html)
+                .await
+                .unwrap();
         }
         Command::Me => {
             let username = msg.chat.username().unwrap();
