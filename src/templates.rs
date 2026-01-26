@@ -1,6 +1,9 @@
 use askama::Template;
 
-use crate::models::{Entry, User};
+use crate::{
+    models::{Entry, User},
+    repository::EntryReserved,
+};
 
 #[derive(Template)]
 #[template(path = "me.txt", escape = "none")]
@@ -14,4 +17,11 @@ pub struct Search<'query, 'entries> {
     pub query: &'query str,
     pub limit: u32,
     pub entries: &'entries [Entry],
+}
+
+#[derive(Template)]
+#[template(path = "entry.txt", escape = "none")]
+pub struct SingleEntry<'entry> {
+    pub entry: &'entry Entry,
+    pub reserved: Option<EntryReserved>,
 }

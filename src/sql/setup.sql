@@ -25,6 +25,21 @@ CREATE TABLE IF NOT EXISTS entries (
     FOREIGN KEY (responsible_person) REFERENCES users (telegram_username) ON DELETE SET NULL
 );
 
+CREATE TABLE reservations (
+    id TEXT(88) PRIMARY KEY,
+    made_by TEXT(32) NOT NULL,
+    start_ts TEXT NOT NULL, -- ISO-8601 datetime
+    end_ts TEXT NOT NULL -- ISO-8601 datetime
+);
+
+CREATE TABLE reservations_entries (
+    reservation_id TEXT(88) NOT NULL,
+    entry_id TEXT(21) NOT NULL,
+    PRIMARY KEY (reservation_id, entry_id),
+    FOREIGN KEY (reservation_id) REFERENCES reservations (id) ON DELETE CASCADE,
+    FOREIGN KEY (entry_id) REFERENCES entries (id) ON DELETE CASCADE
+);
+
 CREATE INDEX idx_entries_image ON entries (image);
 
 CREATE INDEX idx_entries_stored_in ON entries (stored_in);

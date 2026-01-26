@@ -5,12 +5,13 @@ mod templates;
 use std::sync::Arc;
 
 use askama::Template;
+use chrono::Utc;
 use sqlx::sqlite::SqlitePoolOptions;
 use teloxide::{macros::BotCommands, prelude::*, types::ParseMode};
 
 use crate::{
     repository::Repository,
-    templates::{Me, Search},
+    templates::{Me, Search, SingleEntry},
 };
 
 #[derive(BotCommands, Clone)]
@@ -21,6 +22,8 @@ pub enum Command {
     Start,
     Introduce(String),
     Search(String),
+    Reserve(String),
+    Check(String),
 }
 
 async fn handler(
@@ -59,6 +62,25 @@ async fn handler(
             };
 
             let rendered = search.render().unwrap();
+            bot.send_message(msg.chat.id, rendered)
+                .parse_mode(ParseMode::Html)
+                .await?;
+        }
+        Command::Reserve(reservations) => todo!(),
+        Command::Check(id) => {
+            let entry = repo.get_entry(id.to_string()).await.unwrap().unwrap();
+            let reserved = repo
+                .is_entry_reserved(id, Utc::now().naive_utc())
+                .await
+                .unwrap();
+
+            let entry = SingleEntry {
+                entry: &entry,
+                reserved,
+            };
+
+            let rendered = entry.render().unwrap();
+
             bot.send_message(msg.chat.id, rendered)
                 .parse_mode(ParseMode::Html)
                 .await?;
