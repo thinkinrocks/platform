@@ -134,96 +134,37 @@ impl Repository {
         }
     }
 
-    pub async fn get_entries(&self) -> Result<Vec<Entry>, RepositoryError> {
-        let rows = sqlx::query(
-            r#"
-        SELECT
-            id,
-            name,
-            image,
-            description,
-            note,
-            created_at,
-            stored_in,
-            responsible_person
-        FROM entries
-        "#,
-        )
-        .fetch_all(&self.pool)
-        .await?;
-
-        let entries: Vec<Entry> = rows
-            .into_iter()
-            .map(|row| {
-                let created_at_str: Option<String> = row.try_get("created_at").ok();
-                let created_at = created_at_str
-                    .as_deref()
-                    .and_then(|s| NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").ok());
-
-                Entry {
-                    id: row.get("id"),
-                    name: row.get("name"),
-                    image: row.get("image"),
-                    description: row.get("description"),
-                    note: row.get("note"),
-                    created_at,
-                    stored_in: row.get("stored_in"),
-                    responsible_person: row.get("responsible_person"),
-                }
-            })
-            .collect();
-
-        Ok(entries)
-    }
-
-    pub async fn get_entries_paginated(
+    pub async fn search_entries(
         &self,
-        page_size: u32,
-        page_number: u32,
+        search: impl AsRef<str>,
+        limit: u32,
     ) -> Result<Vec<Entry>, RepositoryError> {
-        let offset = (page_number.saturating_sub(1) * page_size) as i64;
+        let search = search.as_ref();
+        let query = r#"
+SELECT
+id,
+name,
+image,
+description,
+note,
+created_at,
+stored_in,
+responsible_person
+FROM entries
+WHERE
+id LIKE '%' || ? || '%'
+OR name LIKE '%' || ? || '%'
+OR description LIKE '%' || ? || '%'
+LIMIT ?"#
+            .trim();
 
-        let rows = sqlx::query(
-            r#"
-            SELECT
-                id,
-                name,
-                image,
-                description,
-                note,
-                created_at,
-                stored_in,
-                responsible_person
-            FROM entries
-            ORDER BY created_at DESC
-            LIMIT ? OFFSET ?
-            "#,
-        )
-        .bind(page_size as i64)
-        .bind(offset)
-        .fetch_all(&self.pool)
-        .await?;
-
-        let entries: Vec<Entry> = rows
-            .into_iter()
-            .map(|row| {
-                let created_at_str: Option<String> = row.try_get("created_at").ok();
-                let created_at = created_at_str
-                    .as_deref()
-                    .and_then(|s| NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").ok());
-
-                Entry {
-                    id: row.get("id"),
-                    name: row.get("name"),
-                    image: row.get("image"),
-                    description: row.get("description"),
-                    note: row.get("note"),
-                    created_at,
-                    stored_in: row.get("stored_in"),
-                    responsible_person: row.get("responsible_person"),
-                }
-            })
-            .collect();
+        let entries = sqlx::query_as::<_, Entry>(query)
+            .bind(&search)
+            .bind(&search)
+            .bind(&search)
+            .bind(limit)
+            .fetch_all(&self.pool)
+            .await?;
 
         Ok(entries)
     }

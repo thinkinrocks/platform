@@ -15,6 +15,7 @@ pub enum Command {
     Help,
     Start,
     Introduce(String),
+    Search(String),
 }
 
 async fn handler(
@@ -34,6 +35,7 @@ async fn handler(
         Command::Me => {
             let username = msg.chat.username().unwrap();
             let user = repo.get_user(username).await.unwrap().unwrap();
+
             bot.send_message(
                 msg.chat.id,
                 format!(
@@ -44,6 +46,11 @@ async fn handler(
             )
             .await
             .unwrap();
+        }
+        Command::Search(query) => {
+            let entries = repo.search_entries(query, 15).await.unwrap();
+            bot.send_message(msg.chat.id, format!("{:?}", entries))
+                .await?;
         }
     }
     Ok(())

@@ -24,3 +24,11 @@ CREATE TABLE IF NOT EXISTS entries (
     FOREIGN KEY (stored_in) REFERENCES entries (id) ON DELETE SET NULL,
     FOREIGN KEY (responsible_person) REFERENCES users (telegram_username) ON DELETE SET NULL
 );
+
+CREATE INDEX idx_entries_image ON entries (image);
+
+CREATE INDEX idx_entries_stored_in ON entries (stored_in);
+
+CREATE INDEX idx_entries_responsible_person ON entries (responsible_person);
+
+CREATE INDEX idx_entries_name ON entries (id);
