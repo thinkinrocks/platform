@@ -2,11 +2,12 @@ mod bot;
 mod models;
 mod repository;
 mod templates;
+mod web;
 
 use sqlx::sqlite::SqlitePoolOptions;
 use tokio::task::JoinSet;
 
-use crate::{bot::serve_bot, repository::Repository};
+use crate::{bot::serve_bot, repository::Repository, web::serve_web};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -22,11 +23,12 @@ async fn main() -> anyhow::Result<()> {
 
     let repo = Repository::new(pool);
 
-    let _ = [serve_bot(repo)]
-        .into_iter()
-        .collect::<JoinSet<_>>()
-        .join_all()
-        .await;
+    let mut join = JoinSet::new();
+
+    join.spawn(serve_bot(repo.clone()));
+    join.spawn(serve_web("0.0.0.0:3000", repo));
+
+    join.join_all().await;
 
     Ok(())
 }

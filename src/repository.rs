@@ -331,4 +331,13 @@ impl Repository {
 
         Ok(entries)
     }
+
+    pub async fn get_entries(&self) -> Result<Vec<Entry>, RepositoryError> {
+        let entries = sqlx::query_as::<_, Entry>("SELECT * FROM entries")
+            .fetch_all(&self.pool)
+            .await
+            .unwrap_or_default();
+
+        Ok(entries)
+    }
 }
