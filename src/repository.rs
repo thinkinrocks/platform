@@ -144,25 +144,31 @@ impl Repository {
     pub async fn is_entry_reserved(
         &self,
         entry_id: impl AsRef<str>,
-        at: NaiveDateTime,
+        check_start: NaiveDateTime,
+        check_end: NaiveDateTime,
     ) -> Result<Option<EntryReserved>, RepositoryError> {
         let entry_id = entry_id.as_ref();
-        let at_str = at.format("%Y-%m-%d %H:%M:%S").to_string();
+
+        let check_start_str = check_start.format("%Y-%m-%d %H:%M:%S").to_string();
+        let check_end_str = check_end.format("%Y-%m-%d %H:%M:%S").to_string();
 
         let row = sqlx::query!(
             r#"
-        SELECT u.telegram_username AS reserver_name, r.start_ts, r.end_ts
+        SELECT u.telegram_username AS reserver_name,
+               r.start_ts,
+               r.end_ts
         FROM reservations_entries re
         JOIN reservations r ON re.reservation_id = r.id
         JOIN users u ON r.made_by = u.telegram_username
         WHERE re.entry_id = ?
-          AND r.start_ts <= ?
+          AND r.start_ts < ?
           AND r.end_ts > ?
+        ORDER BY r.start_ts ASC
         LIMIT 1
         "#,
             entry_id,
-            at_str,
-            at_str
+            check_end_str,
+            check_start_str
         )
         .fetch_optional(&self.pool)
         .await?;
@@ -261,6 +267,67 @@ impl Repository {
             .bind(limit)
             .fetch_all(&self.pool)
             .await?;
+
+        Ok(entries)
+    }
+
+    pub async fn add_to_cart(&self, user_id: &str, entry_id: &str) -> Result<(), RepositoryError> {
+        // TODO: check if entry exists and is not still added
+
+        sqlx::query!(
+            r#"
+        INSERT OR IGNORE INTO cart (id, entry_id)
+        VALUES (?, ?)
+        "#,
+            user_id,
+            entry_id
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn remove_from_cart(
+        &self,
+        user_id: &str,
+        entry_id: &str,
+    ) -> Result<bool, RepositoryError> {
+        let result = sqlx::query!(
+            r#"
+        DELETE FROM cart
+        WHERE id = ? AND entry_id = ?
+        "#,
+            user_id,
+            entry_id
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
+
+    pub async fn get_cart(&self, user_id: &str) -> Result<Vec<Entry>, RepositoryError> {
+        let entries = sqlx::query_as::<_, Entry>(
+            r#"
+        SELECT
+            e.id,
+            e.name,
+            e.image,
+            e.description,
+            e.note,
+            e.created_at,
+            e.stored_in,
+            e.responsible_person
+        FROM cart c
+        JOIN entries e ON e.id = c.entry_id
+        WHERE c.id = ?
+        ORDER BY e.name
+        "#,
+        )
+        .bind(user_id)
+        .fetch_all(&self.pool)
+        .await?;
 
         Ok(entries)
     }

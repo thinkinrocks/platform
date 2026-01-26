@@ -40,6 +40,14 @@ CREATE TABLE reservations_entries (
     FOREIGN KEY (entry_id) REFERENCES entries (id) ON DELETE CASCADE
 );
 
+CREATE TABLE cart (
+    id TEXT(32) NOT NULL,
+    entry_id TEXT(21) NOT NULL,
+    PRIMARY KEY (id, entry_id),
+    FOREIGN KEY (id) REFERENCES users (telegram_username) ON DELETE CASCADE,
+    FOREIGN KEY (entry_id) REFERENCES entries (id) ON DELETE CASCADE
+);
+
 CREATE INDEX idx_entries_image ON entries (image);
 
 CREATE INDEX idx_entries_stored_in ON entries (stored_in);

@@ -11,7 +11,7 @@ use teloxide::{macros::BotCommands, prelude::*, types::ParseMode};
 
 use crate::{
     repository::Repository,
-    templates::{Me, Search, SingleEntry},
+    templates::{Cart, Me, Search, SingleEntry},
 };
 
 #[derive(BotCommands, Clone)]
@@ -22,7 +22,7 @@ pub enum Command {
     Start,
     Introduce(String),
     Search(String),
-    Reserve(String),
+    Cart(String),
     Check(String),
 }
 
@@ -66,13 +66,10 @@ async fn handler(
                 .parse_mode(ParseMode::Html)
                 .await?;
         }
-        Command::Reserve(reservations) => todo!(),
         Command::Check(id) => {
+            let now = Utc::now().naive_utc();
             let entry = repo.get_entry(id.to_string()).await.unwrap().unwrap();
-            let reserved = repo
-                .is_entry_reserved(id, Utc::now().naive_utc())
-                .await
-                .unwrap();
+            let reserved = repo.is_entry_reserved(id, now, now).await.unwrap();
 
             let entry = SingleEntry {
                 entry: &entry,
@@ -80,6 +77,23 @@ async fn handler(
             };
 
             let rendered = entry.render().unwrap();
+
+            bot.send_message(msg.chat.id, rendered)
+                .parse_mode(ParseMode::Html)
+                .await?;
+        }
+        Command::Cart(ids) => {
+            let ids = ids.split_whitespace().map(String::from).collect::<Vec<_>>();
+            let username = msg.chat.username().unwrap();
+
+            for id in ids {
+                repo.add_to_cart(username, &id).await.unwrap();
+            }
+
+            let cart = repo.get_cart(username).await.unwrap();
+
+            let cart = Cart { entries: &cart[..] };
+            let rendered = cart.render().unwrap();
 
             bot.send_message(msg.chat.id, rendered)
                 .parse_mode(ParseMode::Html)

@@ -25,3 +25,9 @@ pub struct SingleEntry<'entry> {
     pub entry: &'entry Entry,
     pub reserved: Option<EntryReserved>,
 }
+
+#[derive(Template)]
+#[template(path = "cart.txt", escape = "none")]
+pub struct Cart<'entries> {
+    pub entries: &'entries [Entry],
+}

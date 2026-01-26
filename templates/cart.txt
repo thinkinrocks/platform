@@ -1,0 +1,7 @@
+{% if entries.is_empty() %}
+Your cart is empty.
+{% else %}
+Your cart:
+{% for entry in entries %}<code>{{ entry.id }}</code> <b>{{ entry.name }}</b>
+{% endfor %}
+{% endif %}
