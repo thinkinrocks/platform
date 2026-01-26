@@ -1,0 +1,7 @@
+{% if entries.is_empty() %}
+Sorry, I couldn't find anything that contains "{{query}}"
+{% else %}
+{% for entry in entries %}
+<code>{{ entry.id }}</code> <b>{{ entry.name }}</b>
+{% endfor %}
+{% endif %}

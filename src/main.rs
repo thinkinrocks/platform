@@ -1,12 +1,17 @@
 mod models;
 mod repository;
+mod templates;
 
 use std::sync::Arc;
 
+use askama::Template;
 use sqlx::sqlite::SqlitePoolOptions;
-use teloxide::{macros::BotCommands, prelude::*};
+use teloxide::{macros::BotCommands, prelude::*, types::ParseMode};
 
-use crate::repository::Repository;
+use crate::{
+    repository::Repository,
+    templates::{Me, Search},
+};
 
 #[derive(BotCommands, Clone)]
 #[command(rename_rule = "lowercase")]
@@ -36,20 +41,26 @@ async fn handler(
             let username = msg.chat.username().unwrap();
             let user = repo.get_user(username).await.unwrap().unwrap();
 
-            bot.send_message(
-                msg.chat.id,
-                format!(
-                    "Hello, @{}!\nYour sire is {}",
-                    user.telegram_username,
-                    user.sire.unwrap_or("no one!".to_string())
-                ),
-            )
-            .await
-            .unwrap();
+            let me = Me { me: &user };
+
+            bot.send_message(msg.chat.id, me.render().unwrap())
+                .await
+                .unwrap();
         }
         Command::Search(query) => {
-            let entries = repo.search_entries(query, 15).await.unwrap();
-            bot.send_message(msg.chat.id, format!("{:?}", entries))
+            let query = query.as_str();
+            let limit = 15;
+            let entries = repo.search_entries(query, limit).await.unwrap();
+
+            let search = Search {
+                query,
+                limit,
+                entries: &entries[..],
+            };
+
+            let rendered = search.render().unwrap();
+            bot.send_message(msg.chat.id, rendered)
+                .parse_mode(ParseMode::Html)
                 .await?;
         }
     }

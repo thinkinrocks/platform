@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use sqlx::types::chrono::NaiveDateTime;
-use sqlx::{Pool, Row, Sqlite};
+use sqlx::{Pool, Sqlite};
 use thiserror::Error;
 
 use crate::models::{Entry, User};

@@ -1,0 +1,4 @@
+Hello, @{{ me.telegram_username }}!\n
+{% if let Some(text) = me.sire %}
+    Your sire is {{ text }}!
+{% endif %}
