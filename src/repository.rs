@@ -101,44 +101,26 @@ impl Repository {
     pub async fn get_entry(&self, id: impl AsRef<str>) -> Result<Option<Entry>, RepositoryError> {
         let id = id.as_ref();
 
-        let row = sqlx::query!(
+        let entry = sqlx::query_as::<_, Entry>(
             r#"
-            SELECT
-                id,
-                name,
-                image,
-                description,
-                note,
-                created_at,
-                stored_in,
-                responsible_person
-            FROM entries
-            WHERE id = ?
+        SELECT
+            id,
+            name,
+            image,
+            description,
+            note,
+            created_at,
+            stored_in,
+            responsible_person
+        FROM entries
+        WHERE id = ?
         "#,
-            id
         )
+        .bind(id)
         .fetch_optional(&self.pool)
         .await?;
 
-        if let Some(row) = row {
-            let created_at = row
-                .created_at
-                .as_deref()
-                .and_then(|s| NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").ok());
-
-            Ok(Some(Entry {
-                id: row.id.unwrap(),
-                name: row.name,
-                image: row.image,
-                description: row.description,
-                note: row.note,
-                created_at,
-                stored_in: row.stored_in,
-                responsible_person: row.responsible_person,
-            }))
-        } else {
-            Ok(None)
-        }
+        Ok(entry)
     }
 
     pub async fn is_entry_reserved(
@@ -242,8 +224,10 @@ impl Repository {
         limit: u32,
     ) -> Result<Vec<Entry>, RepositoryError> {
         let search = search.as_ref();
-        let query = r#"
-            SELECT
+
+        let entries = sqlx::query_as::<_, Entry>(
+            r#"
+        SELECT
             id,
             name,
             image,
@@ -252,21 +236,20 @@ impl Repository {
             created_at,
             stored_in,
             responsible_person
-            FROM entries
-            WHERE
+        FROM entries
+        WHERE
             id LIKE '%' || ? || '%'
             OR name LIKE '%' || ? || '%'
             OR description LIKE '%' || ? || '%'
-            LIMIT ?"#
-            .trim();
-
-        let entries = sqlx::query_as::<_, Entry>(query)
-            .bind(&search)
-            .bind(&search)
-            .bind(&search)
-            .bind(limit)
-            .fetch_all(&self.pool)
-            .await?;
+        LIMIT ?
+        "#,
+        )
+        .bind(search)
+        .bind(search)
+        .bind(search)
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await?;
 
         Ok(entries)
     }
@@ -333,10 +316,22 @@ impl Repository {
     }
 
     pub async fn get_entries(&self) -> Result<Vec<Entry>, RepositoryError> {
-        let entries = sqlx::query_as::<_, Entry>("SELECT * FROM entries")
-            .fetch_all(&self.pool)
-            .await
-            .unwrap_or_default();
+        let entries = sqlx::query_as::<_, Entry>(
+            r#"
+        SELECT
+            id,
+            name,
+            image,
+            description,
+            note,
+            created_at,
+            stored_in,
+            responsible_person
+        FROM entries
+        "#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
 
         Ok(entries)
     }
