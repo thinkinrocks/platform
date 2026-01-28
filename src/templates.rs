@@ -35,3 +35,15 @@ pub struct Cart<'entries> {
 #[derive(Template)]
 #[template(path = "help.txt")]
 pub struct Help;
+
+pub mod errors {
+    use askama::Template;
+
+    #[derive(Template)]
+    #[template(path = "errors/empty_cart.txt")]
+    pub struct EmptyCart;
+
+    #[derive(Template)]
+    #[template(path = "errors/reservation_syntax.txt")]
+    pub struct ReservationSyntax;
+}
