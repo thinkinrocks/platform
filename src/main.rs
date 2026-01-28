@@ -28,7 +28,29 @@ async fn main() -> anyhow::Result<()> {
     join.spawn(serve_bot(repo.clone()));
     join.spawn(serve_web("0.0.0.0:3000", repo));
 
-    join.join_all().await;
+    tokio::select! {
+        _ = tokio::signal::ctrl_c() => {
+            log::info!("Ctrl+C received, shutting down...");
+        }
+
+        res = join.join_next() => {
+            if let Some(res) = res {
+                if let Err(err) = res {
+                    log::error!("Task failed: {:?}", err);
+                }
+            }
+        }
+    }
+
+    join.abort_all();
+
+    while let Some(res) = join.join_next().await {
+        if let Err(err) = res {
+            log::debug!("Task aborted: {:?}", err);
+        }
+    }
+
+    log::info!("Shutdown complete");
 
     Ok(())
 }
