@@ -3,8 +3,7 @@ mod bot;
 mod auth;
 mod repository;
 
-use ldap3::LdapConnAsync;
-use log::{info, warn};
+use log::{info};
 use sqlx::sqlite::SqlitePoolOptions;
 use tokio::task::JoinSet;
 
@@ -31,6 +30,8 @@ async fn main() -> anyhow::Result<()> {
     let mut join = JoinSet::new();
 
     join.spawn(serve_bot(repo.clone()));
+
+    info!("(half life scientist) everything.. seems to be in order");
 
     tokio::select! {
         _ = tokio::signal::ctrl_c() => {
