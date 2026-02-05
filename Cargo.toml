@@ -29,3 +29,6 @@ sha2 = "0.10.9"
 axum = { version = "0.8.8", features = ["macros"] }
 csv = "1.4.0"
 chrono-english = "0.1.8"
+ldap3 = "0.12.1"
+envy = "0.4.2"
+derive_more = { version = "2.1.1", features = ["full"] }
