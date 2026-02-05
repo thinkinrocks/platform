@@ -1,9 +1,14 @@
 mod config;
+mod bot;
+mod auth;
+mod repository;
 
 use ldap3::LdapConnAsync;
 use log::{info, warn};
+use sqlx::sqlite::SqlitePoolOptions;
+use tokio::task::JoinSet;
 
-use crate::config::Config;
+use crate::{auth::Auth, bot::serve_bot, config::Config, repository::Repository};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -12,19 +17,36 @@ async fn main() -> anyhow::Result<()> {
 
     let config = envy::from_env::<Config>()?;
 
-    let (conn, mut ldap) = LdapConnAsync::new(&config.ldap_server).await?;
-    ldap3::drive!(conn);
-
-    let bind_result = ldap.simple_bind(&config.ldap_username, &config.ldap_password).await?;
-    bind_result.success()?;
+    let auth = Auth::new(&config.ldap_server, &config.ldap_username, &config.ldap_password, &config.ldap_base_dn, &config.ldap_user_filter).await;
+    
+    let pool = SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect(&config.database_url)
+        .await?;
+    
+    let repo = Repository::new(pool);
 
     info!("Using config: {:?}", config);
 
-    let (results, _) = ldap.search(&config.ldap_base_dn, ldap3::Scope::Subtree, &config.ldap_user_filter, vec!["sAMAccountName"]).await?.success()?;
-    info!("Connected to LDAP! {} users fetched the filter", results.len());
-    if results.is_empty() {
-        warn!("No users matched the LDAP filter, are you sure the filter is correct? The current value is LDAP_USER_FILTER={}", config.ldap_user_filter)
+    let mut join = JoinSet::new();
+
+    join.spawn(serve_bot(repo.clone()));
+
+    tokio::select! {
+        _ = tokio::signal::ctrl_c() => {
+            log::info!("Ctrl+C received, shutting down...");
+        }
+
+        res = join.join_next() => {
+            if let Some(res) = res {
+                if let Err(err) = res {
+                    log::error!("Task failed: {:?}", err);
+                }
+            }
+        }
     }
+
+    join.abort_all();
 
     Ok(())
 }

@@ -9,4 +9,5 @@ pub struct Config {
     pub ldap_server: String,
     pub ldap_base_dn: String,
     pub ldap_user_filter: String,
+    pub database_url: String,
 }
