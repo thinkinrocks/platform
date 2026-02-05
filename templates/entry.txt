@@ -1,1 +1,0 @@
-<code>{{ entry.id }}</code> <b>{{ entry.name }}</b>{% if let Some(reservation) = reserved %}(reserved by {{ reservation.reserver }}){% endif %}
